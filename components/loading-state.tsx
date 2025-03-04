@@ -12,7 +12,7 @@ export function LoadingState({ currentStep }: LoadingStateProps) {
       {currentStep && <p className="text-muted-foreground">{currentStep}</p>}
       <div className="mt-8 max-w-md text-sm text-muted-foreground text-center">
         <p>
-          We're analyzing your CV and crafting a personalized cover letter that highlights your relevant skills and
+          We&apos;re analyzing your CV and crafting a personalized cover letter that highlights your relevant skills and
           experience. This may take a moment.
         </p>
       </div>
