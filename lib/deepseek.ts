@@ -106,12 +106,28 @@ IMPORTANT: Use proper paragraph breaks and formatting. Each paragraph should be 
     const responseText = await response.text();
     console.log("Response text preview:", responseText.substring(0, 200));
 
+    // Check if the response starts with expected JSON format
+    // If it doesn't look like JSON, don't try to parse it
+    if (!responseText.trim().startsWith("{")) {
+      console.error(
+        "Response is not in JSON format:",
+        responseText.substring(0, 200)
+      );
+      throw new Error(
+        `Invalid response format (not JSON): ${responseText.substring(
+          0,
+          200
+        )}...`
+      );
+    }
+
     // Try to parse as JSON if possible
     let data;
     try {
       data = JSON.parse(responseText);
     } catch (parseError) {
       console.error("Failed to parse response as JSON:", parseError);
+      // Include more details about the response in the error
       throw new Error(
         `Invalid JSON response (${response.status}): ${responseText.substring(
           0,

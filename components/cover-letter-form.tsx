@@ -112,11 +112,39 @@ export function CoverLetterForm() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to generate cover letter");
+        let errorMessage = "Failed to generate cover letter";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch {
+          // If we can't parse the error as JSON, try to get the text
+          const errorText = await response.text().catch(() => null);
+          if (errorText) {
+            errorMessage = `API error: ${errorText.substring(0, 200)}${
+              errorText.length > 200 ? "..." : ""
+            }`;
+          }
+        }
+        throw new Error(errorMessage);
       }
 
-      const result = await response.json();
+      let result;
+      try {
+        result = await response.json();
+      } catch {
+        console.error("Error parsing response as JSON:");
+        const responseText = await response.text().catch(() => null);
+        throw new Error(
+          `Invalid response format: ${
+            responseText ? responseText.substring(0, 200) : "Unknown error"
+          }`
+        );
+      }
+
+      if (!result || !result.coverLetter) {
+        throw new Error("No cover letter was generated. Please try again.");
+      }
+
       setCoverLetter(result.coverLetter);
     } catch (err) {
       console.error("Error generating cover letter:", err);
