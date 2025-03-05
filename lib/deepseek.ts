@@ -14,7 +14,7 @@ export async function generateCoverLetter({
   companyProfile,
   cvBuffer,
   maxWords,
-  stream = true,
+  stream = false,
 }: GenerateCoverLetterParams): Promise<Response | string> {
   try {
     // Extract text from the PDF

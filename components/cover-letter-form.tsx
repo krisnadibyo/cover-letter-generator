@@ -82,9 +82,6 @@ export function CoverLetterForm() {
   const [currentStep, setCurrentStep] = useState<string | null>(null);
   const [coverLetter, setCoverLetter] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [streamedContent, setStreamedContent] = useState<string>("");
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -99,8 +96,6 @@ export function CoverLetterForm() {
     setIsSubmitting(true);
     setCurrentStep("Preparing your CV for analysis...");
     setError(null);
-    setStreamedContent("");
-    setIsInitialLoading(true);
 
     try {
       const formData = new FormData();
@@ -109,11 +104,8 @@ export function CoverLetterForm() {
       formData.append("maxWords", data.maxWords.toString());
       formData.append("cvFile", data.cvFile[0]);
 
-      // Set streaming mode immediately to show the UI
       setCurrentStep("Generating your cover letter...");
-      setIsStreaming(true);
 
-      // Use the fetch API to make the request
       const response = await fetch("/api/generate", {
         method: "POST",
         body: formData,
@@ -124,134 +116,8 @@ export function CoverLetterForm() {
         throw new Error(errorData.message || "Failed to generate cover letter");
       }
 
-      // Check if the response is a stream
-      if (response.headers.get("Content-Type")?.includes("text/event-stream")) {
-        let fullContent = "";
-
-        // Use the ReadableStream API for real-time updates
-        const reader = response.body?.getReader();
-        if (!reader) {
-          throw new Error("Failed to get stream reader");
-        }
-
-        // Process the stream in real-time
-        const processStream = async () => {
-          try {
-            const decoder = new TextDecoder();
-            let receivedFirstChar = false;
-
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-
-              // Decode the chunk
-              const chunk = decoder.decode(value, { stream: true });
-
-              // Process the SSE format
-              const events = chunk.split("\n\n");
-
-              for (const event of events) {
-                if (event.startsWith("data: ") && event !== "data: [DONE]") {
-                  // Extract the character (we're sending one character at a time)
-                  const char = event.substring(6);
-
-                  // Skip the initial message
-                  if (char === "Starting to generate your cover letter...") {
-                    continue;
-                  }
-
-                  // Turn off initial loading when we get the first real character
-                  if (!receivedFirstChar) {
-                    console.log(
-                      "First character received, turning off loading:",
-                      char
-                    );
-                    setIsInitialLoading(false);
-                    receivedFirstChar = true;
-                  }
-
-                  // Handle special newline marker
-                  if (char === "<NEWLINE>") {
-                    fullContent += "\n";
-                  } else {
-                    fullContent += char;
-                  }
-
-                  // Update the UI immediately with each character
-                  setStreamedContent(fullContent);
-
-                  // Auto-scroll to the bottom
-                  requestAnimationFrame(() => {
-                    const contentContainer =
-                      document.querySelector(".content-container");
-                    if (contentContainer) {
-                      contentContainer.scrollTop =
-                        contentContainer.scrollHeight;
-                    }
-                  });
-                } else if (event === "data: [DONE]") {
-                  // Stream is complete
-                  break;
-                }
-              }
-            }
-
-            // Process any remaining text
-            const remaining = decoder.decode();
-            if (remaining) {
-              const events = remaining.split("\n\n");
-              for (const event of events) {
-                if (event.startsWith("data: ") && event !== "data: [DONE]") {
-                  const char = event.substring(6);
-
-                  // Skip the initial message
-                  if (char === "Starting to generate your cover letter...") {
-                    continue;
-                  }
-
-                  // Make sure loading is turned off if we get here
-                  if (!receivedFirstChar) {
-                    console.log(
-                      "First character in remaining text, turning off loading:",
-                      char
-                    );
-                    setIsInitialLoading(false);
-                    receivedFirstChar = true;
-                  }
-
-                  // Handle special newline marker
-                  if (char === "<NEWLINE>") {
-                    fullContent += "\n";
-                  } else {
-                    fullContent += char;
-                  }
-
-                  setStreamedContent(fullContent);
-                }
-              }
-            }
-
-            // Set the final content
-            setCoverLetter(fullContent);
-
-            // Ensure loading is turned off at the end
-            if (isInitialLoading) {
-              console.log("Stream complete, turning off loading");
-              setIsInitialLoading(false);
-            }
-          } catch (streamError) {
-            console.error("Error processing stream:", streamError);
-            throw new Error("Failed to process streaming response");
-          }
-        };
-
-        // Start processing the stream
-        await processStream();
-      } else {
-        // Fallback to JSON response if not streaming
-        const result = await response.json();
-        setCoverLetter(result.coverLetter);
-      }
+      const result = await response.json();
+      setCoverLetter(result.coverLetter);
     } catch (err) {
       console.error("Error generating cover letter:", err);
       setError(
@@ -260,14 +126,12 @@ export function CoverLetterForm() {
     } finally {
       setIsSubmitting(false);
       setCurrentStep(null);
-      setIsStreaming(false);
     }
   }
 
   const resetForm = () => {
     setCoverLetter(null);
     setError(null);
-    setStreamedContent("");
     form.reset();
   };
 
@@ -280,62 +144,9 @@ export function CoverLetterForm() {
       {isSubmitting ? (
         <div className="space-y-4">
           <h3 className="text-lg font-medium">
-            {isStreaming
-              ? "Generating your cover letter in seconds..."
-              : currentStep || "Processing..."}
+            {currentStep || "Processing..."}
           </h3>
-
-          {isStreaming ? (
-            <div className="relative">
-              <div
-                className="content-container border p-4 rounded-md bg-muted/50 whitespace-pre-wrap min-h-[300px] max-h-[500px] overflow-y-auto"
-                style={{
-                  lineHeight: "1.6",
-                  letterSpacing: "0.01em",
-                  fontFamily: "Georgia, serif",
-                  fontSize: "1rem",
-                  padding: "1.5rem",
-                  whiteSpace: "pre-wrap",
-                }}
-              >
-                {isInitialLoading ? (
-                  <div className="flex flex-col items-center justify-center h-[250px]">
-                    <div className="relative w-16 h-16">
-                      <div className="absolute top-0 left-0 w-full h-full border-4 border-t-primary border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
-                      <div
-                        className="absolute top-1 left-1 w-14 h-14 border-4 border-t-transparent border-r-primary border-b-transparent border-l-transparent rounded-full animate-spin"
-                        style={{
-                          animationDirection: "reverse",
-                          animationDuration: "1.5s",
-                        }}
-                      ></div>
-                    </div>
-                    <p className="mt-4 text-muted-foreground">
-                      Crafting your personalized cover letter...
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    {streamedContent}
-                    {/* Blinking cursor effect at the end of the text */}
-                    <span
-                      className="inline-block animate-pulse ml-[1px] align-middle"
-                      style={{
-                        height: "1.2em",
-                        width: "2px",
-                        backgroundColor: "#000",
-                        marginLeft: "1px",
-                        position: "relative",
-                        top: "2px",
-                      }}
-                    ></span>
-                  </>
-                )}
-              </div>
-            </div>
-          ) : (
-            <LoadingState currentStep={currentStep} />
-          )}
+          <LoadingState currentStep={currentStep} />
         </div>
       ) : (
         <Form {...form}>
