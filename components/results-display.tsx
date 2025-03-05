@@ -1,24 +1,30 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Check, Copy, RefreshCw } from "lucide-react"
+import { useState } from "react";
+import { Check, Copy, RefreshCw } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 interface ResultsDisplayProps {
-  coverLetter: string
-  onReset: () => void
+  coverLetter: string;
+  onReset: () => void;
 }
 
 export function ResultsDisplay({ coverLetter, onReset }: ResultsDisplayProps) {
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(coverLetter)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
+    await navigator.clipboard.writeText(coverLetter);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <Card className="w-full">
@@ -26,7 +32,15 @@ export function ResultsDisplay({ coverLetter, onReset }: ResultsDisplayProps) {
         <CardTitle>Your Generated Cover Letter</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="bg-muted p-4 rounded-md whitespace-pre-wrap font-serif text-sm md:text-base leading-relaxed">
+        <div
+          className="bg-muted p-4 rounded-md whitespace-pre-wrap font-serif text-sm md:text-base leading-relaxed"
+          style={{
+            lineHeight: "1.8",
+            letterSpacing: "0.01em",
+            fontFamily: "Georgia, serif",
+            padding: "1.5rem",
+          }}
+        >
           {coverLetter}
         </div>
       </CardContent>
@@ -50,6 +64,5 @@ export function ResultsDisplay({ coverLetter, onReset }: ResultsDisplayProps) {
         </Button>
       </CardFooter>
     </Card>
-  )
+  );
 }
-

@@ -6,6 +6,7 @@ interface GenerateCoverLetterParams {
   companyProfile: string;
   cvBuffer: Buffer;
   maxWords: number;
+  stream?: boolean;
 }
 
 export async function generateCoverLetter({
@@ -13,7 +14,8 @@ export async function generateCoverLetter({
   companyProfile,
   cvBuffer,
   maxWords,
-}: GenerateCoverLetterParams): Promise<string> {
+  stream = true,
+}: GenerateCoverLetterParams): Promise<Response | string> {
   try {
     // Extract text from the PDF
     const pdfData = await pdfParse(cvBuffer);
@@ -45,14 +47,20 @@ The cover letter should:
 3. Demonstrate understanding of the company based on the profile
 4. Include a strong opening and closing
 5. Be approximately ${maxWords} words in length
-6. Follow standard cover letter formatting
-7. Not include any placeholders or fields to be filled in later
+6. Follow standard cover letter formatting with proper paragraphs
+7. Use appropriate line breaks between paragraphs
+8. Include proper spacing and formatting
+9. Not include any placeholders or fields to be filled in later
+
+IMPORTANT: Use proper paragraph breaks and formatting. Each paragraph should be separated by a blank line.
 `;
 
     console.log("Prompt length:", prompt.length);
     console.log("API Key available:", !!process.env.DEEPSEEK_API_KEY);
-    // Make the API request - using the correct endpoint from the documentation
     console.log("Making API request to DeepSeek...");
+    console.log("Streaming enabled:", stream);
+
+    // Make the API request with streaming enabled if requested
     const response = await fetch("https://api.deepseek.com/chat/completions", {
       method: "POST",
       headers: {
@@ -69,6 +77,7 @@ The cover letter should:
         ],
         temperature: 0.7,
         max_tokens: 2048,
+        stream: stream,
       }),
     });
 
@@ -79,7 +88,21 @@ The cover letter should:
       Object.fromEntries(response.headers.entries())
     );
 
-    // Get the response text first to check what's being returned
+    if (!response.ok) {
+      const responseText = await response.text();
+      console.error("API error response:", responseText);
+      throw new Error(
+        `API error (${response.status}): ${responseText.substring(0, 200)}...`
+      );
+    }
+
+    // If streaming is enabled, create a direct passthrough of the stream
+    if (stream) {
+      console.log("Returning stream response directly");
+      return response;
+    }
+
+    // For non-streaming requests, handle as before
     const responseText = await response.text();
     console.log("Response text preview:", responseText.substring(0, 200));
 
@@ -94,13 +117,6 @@ The cover letter should:
           0,
           200
         )}...`
-      );
-    }
-
-    if (!response.ok) {
-      console.error("API error response:", responseText);
-      throw new Error(
-        `API error (${response.status}): ${responseText.substring(0, 200)}...`
       );
     }
 
