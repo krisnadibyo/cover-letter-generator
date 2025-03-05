@@ -46,8 +46,8 @@ The cover letter should:
 2. Highlight relevant experience from the CV that matches the job description
 3. Demonstrate understanding of the company based on the profile
 4. Include a strong opening and closing
-5. Be approximately ${maxWords} words in length
-6. Follow standard cover letter formatting with proper paragraphs
+5. Be approximately at ${maxWords} words max in length
+6. Only include the cover letter text, no need to include headers or footers
 7. Use appropriate line breaks between paragraphs
 8. Include proper spacing and formatting
 9. Not include any placeholders or fields to be filled in later
