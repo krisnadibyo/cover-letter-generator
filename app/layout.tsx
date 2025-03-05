@@ -19,11 +19,6 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <div className="min-h-screen bg-background flex flex-col">
-          <header className="border-b py-4">
-            <div className="container mx-auto px-4">
-              <h1 className="text-xl font-semibold">Cover Letter Generator</h1>
-            </div>
-          </header>
           <div className="flex-1">{children}</div>
           <footer className="border-t py-4">
             <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
