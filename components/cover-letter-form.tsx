@@ -281,7 +281,7 @@ export function CoverLetterForm() {
         <div className="space-y-4">
           <h3 className="text-lg font-medium">
             {isStreaming
-              ? "Generating your cover letter in real-time..."
+              ? "Generating your cover letter in seconds..."
               : currentStep || "Processing..."}
           </h3>
 
