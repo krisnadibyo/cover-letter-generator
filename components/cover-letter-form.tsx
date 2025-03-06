@@ -88,7 +88,7 @@ export function CoverLetterForm() {
     defaultValues: {
       jobDescription: "",
       companyProfile: "",
-      maxWords: 200,
+      maxWords: 100,
     },
   });
 
@@ -283,8 +283,8 @@ export function CoverLetterForm() {
                   <FormControl>
                     <Input
                       type="number"
-                      min={100}
-                      max={250}
+                      min={50}
+                      max={200}
                       {...field}
                       onChange={(e) =>
                         field.onChange(Number.parseInt(e.target.value))
